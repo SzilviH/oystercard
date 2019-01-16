@@ -32,6 +32,10 @@ class Oystercard
     @entry_station = nil
   end
 
+  def sufficient_funds?
+    balance >= @min_balance
+  end
+
 
   private
 
@@ -46,10 +50,6 @@ class Oystercard
 
   def limit_exceeded?(value)
     fail "This exceeds the £#{limit} limit" if balance + value > limit
-  end
-
-  def sufficient_funds?
-    fail "Can\'t start journey: insufficient funds" if balance <= @min_balance
   end
 
 end

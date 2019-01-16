@@ -32,8 +32,14 @@ describe Oystercard do
     expect{ subject.top_up(subject.limit + 1) }.to raise_error "This exceeds the £#{subject.limit} limit"
   end
 
-  it "will raise and error if the user tried to touch in with insufficient funds on the card" do
-    expect{ subject.touch_in(station) }.to raise_error "Can\'t start journey: insufficient funds"
+  it "sufficient_funds method checks that balance is >= minimum balance" do
+    subject.top_up(Oystercard::MIN_BALANCE)
+    expect(subject.sufficient_funds?).to eq true
+  end
+
+  it "sufficient_funds returns false if balance is < minimum balance" do
+    subject.top_up(Oystercard::MIN_BALANCE-0.5)
+    expect(subject.sufficient_funds?).to eq false
   end
 
   it "will raise an error if user tries to touch out without touching in first" do
