@@ -1,6 +1,6 @@
 class Oystercard
 
-  attr_reader :balance, :limit, :entry_station
+  attr_reader :balance, :limit, :entry_station, :journey_history
   LIMIT = 90
   MIN_BALANCE = 1
 
@@ -9,6 +9,8 @@ class Oystercard
     @limit = LIMIT
     @min_balance = MIN_BALANCE
     @entry_station = nil
+    @exit_station = nil
+    @journey_history = []
   end
 
   def top_up(value)
@@ -22,13 +24,21 @@ class Oystercard
     @entry_station = station
   end
 
-  def touch_out(fare)
+  def touch_out(fare, station)
     fail "Can\'t touch out without touching in first" if entry_station == nil
     deduct(fare)
+    @exit_station = station
+    store_journey
     @entry_station = nil
   end
 
+
   private
+
+  def store_journey
+      journey = {entry_station: @entry_station, exit_station: @exit_station }
+      @journey_history << journey
+  end
 
   def deduct(fare)
     @balance -= fare
