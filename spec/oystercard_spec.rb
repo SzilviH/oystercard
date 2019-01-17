@@ -7,7 +7,7 @@ describe Oystercard do
   let(:station3) { double :station3 }
   let(:station4) { double :station4 }
   let(:card_with_10) { subject.top_up(10) ; subject }
-  let(:card_in_journey) {card_with_10.touch_in(station, journey_class) ; subject}
+  let(:card_in_journey) {card_with_10.touch_in(station) ; subject}
   let(:card_with_one_journey) {card_in_journey.touch_out(2, station2) ; subject}
   let(:card_with_two_journeys) do
     card_with_one_journey.touch_in(station3, journey_class)
