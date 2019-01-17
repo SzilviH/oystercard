@@ -7,13 +7,16 @@ describe Oystercard do
   let(:station3) { double :station3 }
   let(:station4) { double :station4 }
   let(:card_with_10) { subject.top_up(10) ; subject }
-  let(:card_in_journey) {card_with_10.touch_in(station) ; subject}
+  let(:card_in_journey) {card_with_10.touch_in(station, journey_class) ; subject}
   let(:card_with_one_journey) {card_in_journey.touch_out(2, station2) ; subject}
   let(:card_with_two_journeys) do
-    card_with_one_journey.touch_in(station3)
+    card_with_one_journey.touch_in(station3, journey_class)
     card_with_one_journey.touch_out(2, station4)
     subject
   end
+  let(:journey) {double(:journey, finish: nil, fare: 1)}
+  let(:journey_class) {double(:journey_class, new: journey)}
+  let(:@current_journey) {}
 
 
   it "has a 0 balance when a new card is initialized" do
@@ -32,35 +35,45 @@ describe Oystercard do
     expect{ subject.top_up(subject.limit + 1) }.to raise_error "This exceeds the £#{subject.limit} limit"
   end
 
-  it "sufficient_funds method checks that balance is >= minimum balance" do
-    subject.top_up(Oystercard::MIN_BALANCE)
-    expect(subject.sufficient_funds?).to eq true
+  describe "#touch_in" do
+    it "touch in checks if it has sufficient funds" do
+      subject.top_up(Oystercard::MIN_BALANCE - 0.01 )
+      expect {subject.touch_in(station)}.to raise_error "Can\'t start journey: insufficient funds"
+    end
+    it "tels current journey to start" do
+      card = Oystercard.new(journey_class)
+      card.top_up(10)
+      expect(journey).to receive(:start).with(station)
+      card.touch_in(station)
+    end
+
+    it "store current journey" do
+      card_with_10.touch_in(station, journey_class)
+      expect(card_with_10.current_journey).to eq journey
+    end
   end
 
-  it "sufficient_funds returns false if balance is < minimum balance" do
-    subject.top_up(Oystercard::MIN_BALANCE-0.5)
-    expect(subject.sufficient_funds?).to eq false
+  describe "#touch out" do
+    it "should tell current journey to finish" do
+      expect(card_in_journey.current_journey).to receive(:finish)
+      card_in_journey.touch_out(station)
+    end
+    it "should ask the current journey what the fare was" do
+      card = Oystercard.new(journey_class)
+      expect(card.current_journey).to receive(:fare)
+      card.touch_out(station)
+    end
+    it "should deduct the fare from balance" do
+      card = Oystercard.new(journey_class)
+      card.top_up(10)
+      card.touch_out(station)
+      expect(card.balance).to eq 9
+    end
   end
 
-  it "will raise an error if user tries to touch out without touching in first" do
-    expect{ card_with_10.touch_out(2, station)}.to raise_error "Can\'t touch out without touching in first"
-  end
 
-  it "will raise an error if user tries to touch in and the card is already in use" do
-    expect{ card_in_journey.touch_in(station) }.to raise_error "Can\'t touch in: card already in use"
-  end
 
-  it "should deduct a fare from the card balance when the touch_out method is called" do
-    expect(card_with_one_journey.balance).to eq 8
-  end
-
-  it "will remember the entry station after touch in" do
-    expect(card_in_journey.entry_station).to eq station
-  end
-
-  it "will reset the entry station to nil after touching out" do
-    expect(card_with_one_journey.entry_station).to eq nil
-  end
+  # some test for touch in when there is enough balance
 
   it "will store journeys in journey history" do
     expect(card_with_one_journey.journey_history).to eq [{entry_station: station, exit_station: station2}]

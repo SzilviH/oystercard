@@ -1,29 +1,29 @@
+# remember to initialize with station (default nil)
+
 class Journey
 
   DEFAULT_MIN_FARE = 1
+  DEFAULT_PENALTY_FARE = 6
 
-  attr_reader :entry_station, :oystercard, :exit_station, :journey_history
-  def initialize(card)
+  attr_reader :entry_station, :oystercard, :exit_station
+  def initialize
     @entry_station = nil
     @exit_station = nil
-    @oystercard = card
-    @journey_history = []
   end
 
-  def touch_in(station)
-    fail "Can\'t start journey: insufficient funds" if !oystercard.sufficient_funds?
+  def start(station)
     @entry_station = station
   end
 
-  def touch_out(station)
+  def finish(station)
     @exit_station = station
   end
 
-  def fare
-    @entry_station.nil? || @exit_station.nil? ? 6 : DEFAULT_MIN_FARE
+  def complete?
+    !@exit_station.nil?
   end
 
-  def store_journey
-      @journey_history << {entry_station: @entry_station, exit_station: @exit_station }
+  def fare
+    @entry_station.nil? || @exit_station.nil? ? DEFAULT_PENALTY_FARE : DEFAULT_MIN_FARE
   end
 end
